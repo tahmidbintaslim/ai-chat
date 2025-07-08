@@ -1,17 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Send, Bot, User, Settings, MessageSquare } from 'lucide-react'
-import { ChatInterfaceProps, Message, ChatModel } from '@/types'
 import { availableModels, callHuggingFaceAPI } from '@/lib/api'
 import { formatTime, generateId } from '@/lib/utils'
+import { Message } from '@/types'
+import { Bot, MessageSquare, Send, User } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
-export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfaceProps) {
+export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [currentModel, setCurrentModel] = useState(availableModels[0].id)
   const [conversationHistory, setConversationHistory] = useState<string[]>([])
+  const [modelLoading, setModelLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -27,7 +28,7 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
     setMessages([
       {
         id: generateId(),
-        content: "Hello! I'm your AI assistant. How can I help you today?",
+        content: "Welcome to your AI Study Assistant! 📚\n\n🔒 **Privacy-First**: I run entirely in your browser using Transformers.js - no data leaves your device, no API keys needed!\n\n🎓 **Educational Focus**: I'm designed to help with:\n• Study questions and explanations\n• Learning new concepts\n• Homework assistance\n• Creative writing practice\n\n⚠️ **Important Limitations**:\n• No internet access - I can't browse the web or get current information\n• Knowledge limited to my training data\n• Best for educational topics, not real-time information\n\nChoose a model above and ask me anything! I'm here to help you learn.",
         role: 'assistant',
         timestamp: new Date()
       }
@@ -40,7 +41,7 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
 
     const userMessage: Message = {
       id: generateId(),
-      content: inputMessage,
+      content: inputMessage.trim(),
       role: 'user',
       timestamp: new Date()
     }
@@ -48,14 +49,27 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
     setMessages(prev => [...prev, userMessage])
     setInputMessage('')
     setIsLoading(true)
+    setModelLoading(true)
 
     try {
+      // Add a message about model loading for first-time use
+      const modelName = availableModels.find(m => m.id === currentModel)?.name || 'AI model'
+      const loadingMessage: Message = {
+        id: generateId(),
+        content: `🤖 Loading ${modelName}... This may take a moment on first use as the model downloads to your browser.`,
+        role: 'system',
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, loadingMessage])
+
       const aiResponse = await callHuggingFaceAPI(
-        inputMessage,
+        inputMessage.trim(),
         currentModel,
-        apiToken,
         conversationHistory
       )
+
+      // Remove loading message
+      setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
 
       const assistantMessage: Message = {
         id: generateId(),
@@ -65,35 +79,40 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
       }
 
       setMessages(prev => [...prev, assistantMessage])
-      
+
       // Update conversation history
-      setConversationHistory(prev => [...prev, inputMessage, aiResponse])
-      
-      // Keep only recent history
+      setConversationHistory(prev => [...prev, inputMessage.trim(), aiResponse])
+
+      // Keep only recent history to prevent memory issues
       if (conversationHistory.length > 20) {
         setConversationHistory(prev => prev.slice(-20))
       }
     } catch (error) {
       console.error('Error:', error)
+      // Remove loading message on error
+      setMessages(prev => prev.filter(msg => msg.role !== 'system' || !msg.content.includes('Loading')))
+
       const errorMessage: Message = {
         id: generateId(),
-        content: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+        content: `❌ ${error instanceof Error ? error.message : 'Something went wrong. Please try again.'}`,
         role: 'system',
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setModelLoading(false)
     }
   }
 
   const handleModelChange = (modelId: string) => {
     setCurrentModel(modelId)
     setConversationHistory([])
-    
+
+    const modelInfo = availableModels.find(m => m.id === modelId)
     const systemMessage: Message = {
       id: generateId(),
-      content: `Switched to ${availableModels.find(m => m.id === modelId)?.name}. Starting fresh conversation.`,
+      content: `🔄 Switched to **${modelInfo?.name}**\n\n${modelInfo?.description}\n\nStarting fresh conversation - previous context cleared.`,
       role: 'system',
       timestamp: new Date()
     }
@@ -132,8 +151,8 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
           <div className="flex items-center space-x-3">
             <Bot className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold">AI Chat Assistant</h1>
-              <p className="text-purple-100">Powered by Hugging Face Models</p>
+              <h1 className="text-2xl font-bold">AI Study Assistant</h1>
+              <p className="text-purple-100">Educational AI powered by Transformers.js - Privacy-first, browser-based!</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -149,13 +168,12 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
                 </option>
               ))}
             </select>
-            <button
-              onClick={onShowSetup}
-              className="p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
-              title="API Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            {modelLoading && (
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-sm">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Loading model...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -165,17 +183,15 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex items-start space-x-3 message-animate ${
-              message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-            }`}
+            className={`flex items-start space-x-3 message-animate ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              }`}
           >
-            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-              message.role === 'user' 
-                ? 'bg-blue-500 text-white' 
-                : message.role === 'assistant'
+            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.role === 'user'
+              ? 'bg-blue-500 text-white'
+              : message.role === 'assistant'
                 ? 'bg-purple-500 text-white'
                 : 'bg-yellow-500 text-white'
-            }`}>
+              }`}>
               {getMessageIcon(message.role)}
             </div>
             <div className={`max-w-xs sm:max-w-md lg:max-w-lg px-4 py-2 rounded-2xl ${getMessageStyles(message.role)}`}>
@@ -184,7 +200,7 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
             </div>
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
@@ -199,7 +215,7 @@ export default function ChatInterface({ apiToken, onShowSetup }: ChatInterfacePr
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
