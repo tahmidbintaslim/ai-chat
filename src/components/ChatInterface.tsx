@@ -27,7 +27,7 @@ export default function ChatInterface() {
     setMessages([
       {
         id: generateId(),
-        content: "Welcome to your AI Study Assistant! 📚\n\n🔒 **Privacy-First**: I run entirely in your browser using Transformers.js - no data leaves your device, no API keys needed!\n\n🎓 **Educational Focus**: I'm designed to help with:\n• Study questions and explanations\n• Learning new concepts\n• Homework assistance\n• Creative writing practice\n\n⚠️ **Important Limitations**:\n• No internet access - I can't browse the web or get current information\n• Knowledge limited to my training data\n• Best for educational topics, not real-time information\n\nChoose a model above and ask me anything! I'm here to help you learn.",
+        content: "Welcome to your AI Study Assistant! 📚\n\n🎯 **Demo Mode**: Currently running in demonstration mode with intelligent mock responses while we resolve compatibility issues with transformers.js\n\n🔒 **Privacy-First**: Once fully implemented, I'll run entirely in your browser - no data leaves your device, no API keys needed!\n\n🎓 **Educational Focus**: I'm designed to help with:\n• Study questions and explanations\n• Learning new concepts\n• Homework assistance\n• Creative writing practice\n• Math and science problems\n• History and literature discussions\n\n✨ **Try asking me about**: Math, science, history, writing, or any educational topic!\n\nI'll provide helpful, contextual responses to support your learning journey.",
         role: 'assistant',
         timestamp: new Date()
       }

@@ -49,10 +49,23 @@ const nextConfig = {
             "child_process": false,
         }
 
+        // Fix for transformers.js and onnxruntime-web
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'sharp$': false,
+            'onnxruntime-node$': false,
+        }
+
         config.module.rules.push({
             test: /\.mjs$/,
             include: /node_modules/,
             type: 'javascript/auto',
+        })
+
+        // Additional rule for transformers.js
+        config.module.rules.push({
+            test: /\.wasm$/,
+            type: 'asset/resource',
         })
 
         return config
