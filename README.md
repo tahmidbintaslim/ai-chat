@@ -119,21 +119,19 @@ _Note: Download size is one-time only. Models are cached permanently._
 - **Robots.txt** - Search engine optimization
 - **Responsive Design** - Works on all devices and screen sizes
 
-## � Project Structure
+## 🗂 Project Structure
 
 ```
 ai-chat-assistant/
 ├── src/
 │   ├── app/                 # Next.js App Router
-│   │   ├── api/            # API routes (legacy support)
 │   │   ├── globals.css     # Global styles
 │   │   ├── layout.tsx      # Root layout with metadata
 │   │   ├── page.tsx        # Home page
 │   │   ├── robots.ts       # SEO robots.txt
 │   │   └── sitemap.ts      # SEO sitemap
 │   ├── components/         # React components
-│   │   ├── ChatInterface.tsx
-│   │   └── ApiSetup.tsx    # Legacy API setup
+│   │   └── ChatInterface.tsx
 │   ├── lib/               # Utilities and APIs
 │   │   ├── api.ts         # Transformers.js integration
 │   │   └── utils.ts       # Helper functions
@@ -143,8 +141,8 @@ ai-chat-assistant/
 ├── .env.example          # Environment variables template
 ├── next.config.js        # Next.js configuration
 ├── tailwind.config.js    # Tailwind CSS configuration
-├── vercel.json          # Deployment configuration
-└── package.json         # Dependencies and scripts
+├── vercel.json           # Deployment configuration
+└── package.json          # Dependencies and scripts
 ```
 
 ## ⚙️ Configuration
@@ -202,7 +200,7 @@ The app works on any platform supporting Node.js:
 - **Docker** - Use provided Dockerfile
 - **Self-hosted** - Standard Node.js deployment
 
-## 🔧 Development
+## 🛠️ Development
 
 ### Available Scripts
 
@@ -254,7 +252,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Memory Usage**: 200MB-1GB depending on loaded models
 - **Browser Support**: Chrome 88+, Firefox 78+, Safari 14+
 
-## 🆘 Support
+## 🏘 Support
 
 - **Documentation**: Check our [Wiki](https://github.com/your-username/ai-chat-assistant/wiki)
 - **Issues**: [GitHub Issues](https://github.com/your-username/ai-chat-assistant/issues)

@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
     title: 'AI Chat Assistant - Privacy-First Browser-Based AI',
-    description: 'Educational AI chat assistant powered by Transformers.js. No API keys required, runs entirely in your browser with complete privacy.',
+    description: 'Educational AI chat assistant powered by Transformers.js. Runs entirely in your browser with complete privacy.',
     keywords: ['AI', 'chat', 'assistant', 'transformers.js', 'privacy', 'browser-based', 'educational', 'huggingface', 'LLM'],
     authors: [{ name: 'AI Chat Assistant Team' }],
     creator: 'AI Chat Assistant',
@@ -16,14 +16,14 @@ export const metadata = {
     classification: 'AI Assistant',
     openGraph: {
         title: 'AI Chat Assistant - Privacy-First Browser-Based AI',
-        description: 'Educational AI chat assistant that runs entirely in your browser. No API keys, complete privacy.',
+        description: 'Educational AI chat assistant that runs entirely in your browser. Complete privacy.',
         type: 'website',
         locale: 'en_US',
     },
     twitter: {
         card: 'summary_large_image',
         title: 'AI Chat Assistant - Privacy-First Browser-Based AI',
-        description: 'Educational AI chat assistant that runs entirely in your browser. No API keys, complete privacy.',
+        description: 'Educational AI chat assistant that runs entirely in your browser. Complete privacy.',
     },
     robots: {
         index: true,
