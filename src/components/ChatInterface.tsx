@@ -10,7 +10,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [currentModel, setCurrentModel] = useState(availableModels[0].id)
+  const [currentModel, setCurrentModel] = useState(availableModels[0]?.id || 'Xenova/flan-t5-small')
   const [conversationHistory, setConversationHistory] = useState<string[]>([])
   const [modelLoading, setModelLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -24,7 +24,6 @@ export default function ChatInterface() {
   }, [messages])
 
   useEffect(() => {
-    // Add welcome message
     setMessages([
       {
         id: generateId(),
@@ -52,7 +51,6 @@ export default function ChatInterface() {
     setModelLoading(true)
 
     try {
-      // Add a message about model loading for first-time use
       const modelName = availableModels.find(m => m.id === currentModel)?.name || 'AI model'
       const loadingMessage: Message = {
         id: generateId(),
@@ -68,7 +66,6 @@ export default function ChatInterface() {
         conversationHistory
       )
 
-      // Remove loading message
       setMessages(prev => prev.filter(msg => msg.id !== loadingMessage.id))
 
       const assistantMessage: Message = {
@@ -80,16 +77,12 @@ export default function ChatInterface() {
 
       setMessages(prev => [...prev, assistantMessage])
 
-      // Update conversation history
       setConversationHistory(prev => [...prev, inputMessage.trim(), aiResponse])
 
-      // Keep only recent history to prevent memory issues
       if (conversationHistory.length > 20) {
         setConversationHistory(prev => prev.slice(-20))
       }
     } catch (error) {
-      console.error('Error:', error)
-      // Remove loading message on error
       setMessages(prev => prev.filter(msg => msg.role !== 'system' || !msg.content.includes('Loading')))
 
       const errorMessage: Message = {
@@ -110,9 +103,10 @@ export default function ChatInterface() {
     setConversationHistory([])
 
     const modelInfo = availableModels.find(m => m.id === modelId)
+    if (!modelInfo) return
     const systemMessage: Message = {
       id: generateId(),
-      content: `🔄 Switched to **${modelInfo?.name}**\n\n${modelInfo?.description}\n\nStarting fresh conversation - previous context cleared.`,
+      content: `🔄 Switched to **${modelInfo.name}**\n\n${modelInfo.description}\n\nStarting fresh conversation - previous context cleared.`,
       role: 'system',
       timestamp: new Date()
     }
@@ -145,7 +139,6 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-      {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -161,6 +154,7 @@ export default function ChatInterface() {
               onChange={(e) => handleModelChange(e.target.value)}
               className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/50"
               title="Select AI Model"
+              aria-label="Select AI Model"
             >
               {availableModels.map((model) => (
                 <option key={model.id} value={model.id} className="text-gray-800">
@@ -178,8 +172,12 @@ export default function ChatInterface() {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
+      <div
+        className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin"
+        role="log"
+        aria-live="polite"
+        aria-label="Chat conversation"
+      >
         {messages.map((message) => (
           <div
             key={message.id}
@@ -219,7 +217,6 @@ export default function ChatInterface() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <form onSubmit={handleSendMessage} className="p-6 border-t border-gray-200">
         <div className="flex items-center space-x-4">
           <input
@@ -230,19 +227,22 @@ export default function ChatInterface() {
             className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             disabled={isLoading}
             maxLength={500}
+            aria-label="Chat message input"
+            aria-describedby="message-help"
           />
           <button
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
             className="p-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title="Send message"
+            aria-label="Send message"
           >
             <Send className="w-5 h-5" />
           </button>
         </div>
         <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-          <span>Press Enter to send</span>
-          <span>{inputMessage.length}/500</span>
+          <span id="message-help">Press Enter to send</span>
+          <span aria-live="polite">{inputMessage.length}/500</span>
         </div>
       </form>
     </div>

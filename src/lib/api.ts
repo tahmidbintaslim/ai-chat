@@ -28,15 +28,27 @@ export const availableModels: ChatModel[] = [
   }
 ]
 
-// Cache for loaded models
 const modelCache = new Map()
+
+export function clearModelCache(): void {
+  modelCache.clear()
+  if (typeof window !== 'undefined' && 'gc' in window) {
+    (window as any).gc()
+  }
+}
+
+export function getModelCacheStatus(): { size: number; models: string[] } {
+  return {
+    size: modelCache.size,
+    models: Array.from(modelCache.keys())
+  }
+}
 
 export async function callTransformersAPI(
   message: string,
   model: string,
   conversationHistory: string[] = []
 ): Promise<string> {
-  // Input validation
   if (!message?.trim()) {
     throw new Error('Message cannot be empty')
   }
@@ -45,16 +57,21 @@ export async function callTransformersAPI(
     throw new Error('Model must be specified')
   }
 
+  const sanitizedMessage = message.trim().replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+
+  if (!sanitizedMessage) {
+    throw new Error('Message contains only invalid characters')
+  }
+
+  if (sanitizedMessage.length > 500) {
+    throw new Error('Message is too long. Please keep it under 500 characters.')
+  }
+
   try {
-    // Dynamic import to avoid SSR issues
     const { pipeline } = await import('@huggingface/transformers')
 
-    // Get or create model pipeline
     let generator = modelCache.get(model)
     if (!generator) {
-      console.log(`Loading model: ${model}`)
-
-      // Create pipeline based on model type with error handling
       try {
         if (model.includes('DialoGPT')) {
           generator = await pipeline('text-generation', model, {
@@ -77,28 +94,25 @@ export async function callTransformersAPI(
             dtype: 'fp32'
           })
         }
-      } catch (modelError) {
-        console.error(`Failed to load model ${model}:`, modelError)
+      } catch {
         throw new Error(`Failed to load model: ${model}. Please try a different model or refresh the page.`)
       }
 
       modelCache.set(model, generator)
-    }    // Prepare input based on model type
+    }
+
     let input = ''
 
     if (model.includes('DialoGPT')) {
-      // DialoGPT expects conversation format
       if (conversationHistory.length > 0) {
-        const recentHistory = conversationHistory.slice(-6) // Last 3 exchanges
+        const recentHistory = conversationHistory.slice(-6)
         input = recentHistory.join(' ') + ' ' + message
       } else {
         input = message
       }
     } else if (model.includes('blenderbot')) {
-      // BlenderBot works well with direct input
       input = message
     } else if (model.includes('t5') || model.includes('flan')) {
-      // T5/Flan-T5 models work well with educational task formatting
       if (message.includes('?')) {
         input = `Question: ${message}`
       } else if (message.toLowerCase().includes('explain') || message.toLowerCase().includes('what is') || message.toLowerCase().includes('how does')) {
@@ -111,9 +125,9 @@ export async function callTransformersAPI(
         input = `Question: ${message}`
       }
     } else {
-      // For GPT-2 models, format as a conversation
       input = `Human: ${message}\nAssistant:`
-    }    // Generate response with appropriate parameters
+    }
+
     let generationOptions = {}
 
     if (model.includes('blenderbot')) {
@@ -146,32 +160,25 @@ export async function callTransformersAPI(
 
     const outputs = await generator(input, generationOptions)
 
-    // Extract and clean response
     let response = ''
     if (Array.isArray(outputs)) {
-      response = outputs[0]?.generated_text || outputs[0]?.text || ''
+      const firstOutput = outputs[0]
+      response = firstOutput?.generated_text || firstOutput?.text || ''
     } else {
       response = outputs?.generated_text || outputs?.text || ''
     }
 
-    // Clean up response based on model type
     if (model.includes('DialoGPT')) {
-      // Remove the input from DialoGPT response
       if (response.includes(input)) {
         response = response.replace(input, '').trim()
       }
     } else if (model.includes('blenderbot')) {
-      // BlenderBot usually gives clean responses
       response = response.trim()
     } else if (model.includes('t5') || model.includes('flan')) {
-      // T5/Flan-T5 models typically give clean, direct responses
       response = response.trim()
-      // Remove any input prefixes that might remain
       response = response.replace(/^(Question:|Explain:|Summarize:|Solve:|Answer:)/gi, '').trim()
-      // Remove any trailing repetition
       const sentences = response.split('.')
       if (sentences.length > 1) {
-        // Keep only unique sentences to avoid repetition
         const uniqueSentences = Array.from(new Set(sentences.filter(s => s.trim().length > 0)))
         response = uniqueSentences.join('.').trim()
         if (response && !response.endsWith('.')) {
@@ -179,27 +186,25 @@ export async function callTransformersAPI(
         }
       }
     } else {
-      // For GPT-2, extract only the assistant's response
       if (response.includes('Assistant:')) {
         const parts = response.split('Assistant:')
-        response = parts[parts.length - 1].trim()
+        const lastPart = parts[parts.length - 1]
+        if (lastPart) {
+          response = lastPart.trim()
+        }
       }
-      // Remove any remaining human/assistant markers
       response = response.replace(/^(Human:|Assistant:)/gi, '').trim()
-      // Remove the original input if it appears
       if (response.startsWith(message)) {
         response = response.substring(message.length).trim()
       }
     }
 
-    // Final cleanup and validation
-    response = response.replace(/^\W+/, '').trim() // Remove leading punctuation
+    response = response.replace(/^\W+/, '').trim()
 
     if (!response || response.length < 3) {
       return "I'm having trouble generating a good response. Please try again or switch to a different model."
     }
 
-    // Limit response length for better UX
     if (response.length > 500) {
       const sentences = response.split(/[.!?]+/)
       let truncated = ''
@@ -213,9 +218,6 @@ export async function callTransformersAPI(
     return response
 
   } catch (error) {
-    console.error('Transformers.js error:', error)
-
-    // Provide more specific error messages
     if (error instanceof Error) {
       if (error.message.includes('Failed to fetch')) {
         throw new Error('Network error: Please check your internet connection and try again.')
@@ -230,5 +232,4 @@ export async function callTransformersAPI(
   }
 }
 
-// Legacy function name for compatibility
 export const callHuggingFaceAPI = callTransformersAPI

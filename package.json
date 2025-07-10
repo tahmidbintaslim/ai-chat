@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.6.1",

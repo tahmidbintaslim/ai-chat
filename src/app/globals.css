@@ -22,7 +22,6 @@
   }
 }
 
-/* Custom scrollbar */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }

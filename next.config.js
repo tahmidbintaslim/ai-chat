@@ -2,8 +2,36 @@
 const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
-    webpack: (config, { isServer }) => {
-        // Set up fallbacks for Node.js modules to prevent build errors
+    poweredByHeader: false,
+    compress: true,
+
+    async headers() {
+        return [
+            {
+                source: '/(.*)',
+                headers: [
+                    {
+                        key: 'X-DNS-Prefetch-Control',
+                        value: 'on'
+                    },
+                    {
+                        key: 'Strict-Transport-Security',
+                        value: 'max-age=63072000; includeSubDomains; preload'
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff'
+                    },
+                    {
+                        key: 'Permissions-Policy',
+                        value: 'camera=(), microphone=(), geolocation=()'
+                    }
+                ]
+            }
+        ]
+    },
+
+    webpack: (config) => {
         config.resolve.fallback = {
             ...config.resolve.fallback,
             "fs": false,
@@ -21,7 +49,6 @@ const nextConfig = {
             "child_process": false,
         }
 
-        // Configure module rules for better ES module handling
         config.module.rules.push({
             test: /\.mjs$/,
             include: /node_modules/,
@@ -30,7 +57,7 @@ const nextConfig = {
 
         return config
     },
-    // External packages that should not be bundled on the server
+
     experimental: {
         serverComponentsExternalPackages: ['@huggingface/transformers', 'onnxruntime-web'],
     },

@@ -1,33 +1,18 @@
 export interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant' | 'system'
-  timestamp: Date
+  readonly id: string
+  readonly content: string
+  readonly role: 'user' | 'assistant' | 'system'
+  readonly timestamp: Date
 }
 
 export interface ChatModel {
-  id: string
-  name: string
-  description: string
-}
-
-export interface ApiResponse {
-  generated_text?: string
-  text?: string
-  error?: string
+  readonly id: string
+  readonly name: string
+  readonly description: string
 }
 
 export interface ChatState {
-  messages: Message[]
-  isLoading: boolean
-  currentModel: string
-}
-
-export interface ApiSetupProps {
-  onTokenSave: (token: string) => void
-}
-
-export interface ChatInterfaceProps {
-  apiToken: string
-  onShowSetup: () => void
+  readonly messages: Message[]
+  readonly isLoading: boolean
+  readonly currentModel: string
 }
