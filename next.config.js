@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
     poweredByHeader: false,
     compress: true,
 
@@ -31,6 +30,10 @@ const nextConfig = {
         ]
     },
 
+    // Next.js 16 uses Turbopack by default
+    // For compatibility with transformers.js, we'll use webpack
+    serverExternalPackages: ['@huggingface/transformers', 'onnxruntime-web'],
+    
     webpack: (config) => {
         config.resolve.fallback = {
             ...config.resolve.fallback,
@@ -69,10 +72,6 @@ const nextConfig = {
         })
 
         return config
-    },
-
-    experimental: {
-        serverComponentsExternalPackages: ['@huggingface/transformers', 'onnxruntime-web'],
     },
 }
 
